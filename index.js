@@ -1,8 +1,6 @@
-import express from "express";
+const express = require("express");
 
 const app = express();
-
-// Port Render setzt
 const PORT = process.env.PORT || 10000;
 
 app.get("/", (req, res) => {
