@@ -34,6 +34,7 @@ wss.on("connection", ws => {
             if (userWs && userWs.readyState === 1){
                 console.log(`Server -> User 2: ${data.userId}, payload length: ${data.payload.length}`)
                 userWs.send(JSON.stringify({ payload: data.payload }));
+            }
         }
     });
 
