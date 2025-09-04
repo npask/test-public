@@ -4,36 +4,41 @@ const { WebSocketServer } = require("ws");
 
 const app = express();
 const port = 3000;
-
-// Express nur als Beispiel REST-Server
 app.get("/", (req, res) => res.send("Cloud Server läuft"));
 app.listen(port, () => console.log(`Express läuft auf Port ${port}`));
 
-// WebSocket Server für User
 const wss = new WebSocketServer({ port: 8080 });
-const clients = new Set();
+const userChannels = new Map(); // userId -> ws
+let serverProxyWs = null;
 
 wss.on("connection", ws => {
-    clients.add(ws);
-    console.log("Neuer User verbunden");
+    ws.on("message", message => {
+        let data;
+        try { data = JSON.parse(message.toString()); } 
+        catch { return; }
+
+        if (data.type === "register_user") {
+            userChannels.set(data.userId, ws);
+            console.log(`User ${data.userId} verbunden`);
+        } else if (data.type === "register_server") {
+            serverProxyWs = ws;
+            console.log("Server Proxy verbunden");
+        } else if (data.type === "to_server") {
+            // User -> Server Proxy
+            if (serverProxyWs && serverProxyWs.readyState === 1)
+                serverProxyWs.send(JSON.stringify({ userId: data.userId, payload: data.payload }));
+        } else if (data.type === "to_user") {
+            // Server Proxy -> User
+            const userWs = userChannels.get(data.userId);
+            if (userWs && userWs.readyState === 1)
+                userWs.send(JSON.stringify({ payload: data.payload }));
+        }
+    });
 
     ws.on("close", () => {
-        clients.delete(ws);
-        console.log("User getrennt");
-    });
-
-    ws.on("message", message => {
-        // Optional: User -> Server Nachrichten weiterleiten
-        console.log("Nachricht vom User:", message.toString());
+        for (let [id, socket] of userChannels) {
+            if (socket === ws) userChannels.delete(id);
+        }
+        if (ws === serverProxyWs) serverProxyWs = null;
     });
 });
-
-// Funktion um Daten vom MC Server zu verteilen
-function broadcastToUsers(data) {
-    for (const client of clients) {
-        if (client.readyState === 1) client.send(data);
-    }
-}
-
-// Export broadcast, damit PY Server Proxy die Daten senden kann
-module.exports = { broadcastToUsers };
