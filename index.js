@@ -1,14 +1,19 @@
 // cloud.js
 const express = require("express");
+const http = require("http");
 const { WebSocketServer } = require("ws");
 
 const app = express();
-const port = 3000;
-app.get("/", (req, res) => res.send("Cloud Server läuft"));
-app.listen(port, () => console.log(`Express läuft auf Port ${port}`));
 
-const wss = new WebSocketServer({ port: 8080 });
-const userChannels = new Map(); // userId -> ws
+// Express Route
+app.get("/", (req, res) => res.send("Express + WS auf gleichem Port läuft"));
+
+// HTTP Server erstellen
+const server = http.createServer(app);
+
+// WebSocket Server auf demselben HTTP Server
+const wss = new WebSocketServer({ server });
+const userChannels = new Map();
 let serverProxyWs = null;
 
 wss.on("connection", ws => {
@@ -19,16 +24,11 @@ wss.on("connection", ws => {
 
         if (data.type === "register_user") {
             userChannels.set(data.userId, ws);
-            console.log(`User ${data.userId} verbunden`);
         } else if (data.type === "register_server") {
             serverProxyWs = ws;
-            console.log("Server Proxy verbunden");
-        } else if (data.type === "to_server") {
-            // User -> Server Proxy
-            if (serverProxyWs && serverProxyWs.readyState === 1)
-                serverProxyWs.send(JSON.stringify({ userId: data.userId, payload: data.payload }));
+        } else if (data.type === "to_server" && serverProxyWs) {
+            serverProxyWs.send(JSON.stringify({ userId: data.userId, payload: data.payload }));
         } else if (data.type === "to_user") {
-            // Server Proxy -> User
             const userWs = userChannels.get(data.userId);
             if (userWs && userWs.readyState === 1)
                 userWs.send(JSON.stringify({ payload: data.payload }));
@@ -42,3 +42,6 @@ wss.on("connection", ws => {
         if (ws === serverProxyWs) serverProxyWs = null;
     });
 });
+
+// Server starten
+server.listen(3000, () => console.log("Express + WS läuft auf Port 3000"));
