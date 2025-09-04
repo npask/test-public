@@ -30,9 +30,9 @@ wss.on("connection", ws => {
             serverProxyWs.send(JSON.stringify({ userId: data.userId, payload: data.payload }));
         } else if (data.type === "to_user") {
             const userWs = userChannels.get(data.userId);
-            print(f"Sende an Cloud: User {userId}, len={len(payload_hex)}")
-            if (userWs && userWs.readyState === 1)
-                print(f"Sende an Cloud 2: User {userId}, len={len(payload_hex)}")
+            console.log(`Server -> User 1: ${data.userId}, payload length: ${data.payload.length}`)
+            if (userWs && userWs.readyState === 1){
+                console.log(`Server -> User 2: ${data.userId}, payload length: ${data.payload.length}`)
                 userWs.send(JSON.stringify({ payload: data.payload }));
         }
     });
