@@ -1,35 +1,32 @@
-// cloud.js
 const express = require("express");
 const http = require("http");
 const { WebSocketServer } = require("ws");
 
 const app = express();
-
-// Express Route
-app.get("/", (req, res) => res.send("Express + WS auf gleichem Port läuft"));
-
-// HTTP Server erstellen
 const server = http.createServer(app);
-
-// WebSocket Server auf demselben HTTP Server
 const wss = new WebSocketServer({ server });
-const userChannels = new Map();
+
+const userChannels = new Map(); // userId -> ws
 let serverProxyWs = null;
+
+app.get("/", (req, res) => res.send("Cloud läuft"));
 
 wss.on("connection", ws => {
     ws.on("message", (message, isBinary) => {
         if (isBinary) {
-            // Hier sind die rohen MC-Daten!
-            // → Entscheide, ob sie vom User oder vom Server kommen
             if (ws === serverProxyWs) {
-                // vom Server an User weiterleiten
-                for (const [uid, userWs] of userChannels) {
-                    if (userWs.readyState === 1) {
-                        userWs.send(message, { binary: true });
-                    }
+                // Binary vom Server → an richtigen User
+                const uid = message.readUInt32BE(0);
+                const payload = message.subarray(4);
+                const userWs = userChannels.get(uid);
+                if (userWs && userWs.readyState === 1) {
+                    const buf = Buffer.alloc(4 + payload.length);
+                    buf.writeUInt32BE(uid, 0);
+                    payload.copy(buf, 4);
+                    userWs.send(buf, { binary: true });
                 }
             } else {
-                // vom User an Server weiterleiten
+                // Binary vom User → an Server weiterleiten
                 if (serverProxyWs && serverProxyWs.readyState === 1) {
                     serverProxyWs.send(message, { binary: true });
                 }
@@ -37,15 +34,16 @@ wss.on("connection", ws => {
             return;
         }
 
-        // JSON-Steuernachrichten
+        // JSON Nachrichten
         let data;
-        try { data = JSON.parse(message.toString()); }
-        catch { return; }
+        try { data = JSON.parse(message.toString()); } catch { return; }
 
         if (data.type === "register_user") {
             userChannels.set(data.userId, ws);
+            console.log("User registriert:", data.userId);
         } else if (data.type === "register_server") {
             serverProxyWs = ws;
+            console.log("Server registriert");
         } else if (data.type === "ping") {
             ws.send(JSON.stringify({ type: "pong" }));
         }
@@ -59,5 +57,4 @@ wss.on("connection", ws => {
     });
 });
 
-// Server starten
-server.listen(3000, () => console.log("Express + WS läuft auf Port 3000"));
+server.listen(3000, () => console.log("Cloud läuft auf Port 3000"));
