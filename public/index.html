@@ -1,61 +1,94 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <title>Installer</title>
-    <style>
-        body { font-family: Arial, sans-serif; background: #121212; color: #fff; text-align: center; padding: 50px; }
-        button { padding: 10px 20px; font-size: 16px; margin-top: 20px; cursor: pointer; }
-        #status { margin-top: 20px; }
-    </style>
+<meta charset="UTF-8">
+<title>Installer</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+<style>
+    * { box-sizing: border-box; margin:0; padding:0; }
+    body {
+        font-family: 'Roboto', sans-serif;
+        background: linear-gradient(135deg, #1f1c2c, #928dab);
+        color: #fff;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .installer-container {
+        background: rgba(0,0,0,0.7);
+        border-radius: 15px;
+        padding: 40px 50px;
+        width: 400px;
+        text-align: center;
+        box-shadow: 0 15px 30px rgba(0,0,0,0.5);
+    }
+    h1 {
+        font-size: 28px;
+        margin-bottom: 10px;
+    }
+    p {
+        margin-bottom: 30px;
+        font-size: 16px;
+        color: #ccc;
+    }
+    button {
+        background: #ff4c4c;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 12px 25px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    button:hover {
+        background: #ff6b6b;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+    }
+    #status {
+        margin-top: 20px;
+        font-size: 14px;
+        color: #ffd700;
+    }
+</style>
 </head>
 <body>
-    <h1>Installer</h1>
-    <p>Klicke auf "Installieren", um die aktuelle Version herunterzuladen.</p>
-    <button id="installBtn">Installieren</button>
-    <div id="status"></div>
+    <div class="installer-container">
+        <h1>Installer</h1>
+        <p>Klicke auf den Button, um die neueste Version herunterzuladen.</p>
+        <button id="downloadBtn">Installer herunterladen</button>
+        <div id="status"></div>
+    </div>
 
     <script>
-        const versionFile = 'version.json'; // auf dem Server verfügbar
+        const INSTALLER_URL = 'https://example.com/installer.exe'; // Hier installer.exe vom Server
 
-        async function install() {
-            const status = document.getElementById('status');
-            status.innerText = "Version prüfen...";
+        const btn = document.getElementById('downloadBtn');
+        const status = document.getElementById('status');
+
+        btn.addEventListener('click', async () => {
+            status.innerText = "Starte Download...";
+            btn.disabled = true;
+            btn.innerText = "Lade herunter...";
 
             try {
-                const res = await fetch(versionFile);
-                const data = await res.json();
-
-                const runUrl = data.runurl;
-                const mainUrl = data.url;
-                const version = data.version;
-
-                status.innerText = `Lade Version ${version} herunter...`;
-
-                // Download run.exe
-                const runResp = await fetch(runUrl);
-                const runBlob = await runResp.blob();
-                const runLink = document.createElement('a');
-                runLink.href = URL.createObjectURL(runBlob);
-                runLink.download = 'run.exe';
-                runLink.click();
-
-                // Download main.exe
-                const mainResp = await fetch(mainUrl);
-                const mainBlob = await mainResp.blob();
-                const mainLink = document.createElement('a');
-                mainLink.href = URL.createObjectURL(mainBlob);
-                mainLink.download = 'main.exe';
-                mainLink.click();
-
-                status.innerText = "Download abgeschlossen! Starte run.exe, um das Programm zu starten.";
+                const res = await fetch(INSTALLER_URL);
+                const blob = await res.blob();
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = "installer.exe";
+                link.click();
+                status.innerText = "Download abgeschlossen! Starte nun installer.exe.";
+                btn.innerText = "Fertig!";
             } catch (err) {
                 console.error(err);
-                status.innerText = "Fehler beim Herunterladen. Bitte überprüfe deine Internetverbindung.";
+                status.innerText = "Fehler beim Download.";
+                btn.disabled = false;
+                btn.innerText = "Installer herunterladen";
             }
-        }
-
-        document.getElementById('installBtn').addEventListener('click', install);
+        });
     </script>
 </body>
 </html>
