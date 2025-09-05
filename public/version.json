@@ -1,5 +1,12 @@
 {
-    "version": "1.1.0",
-    "url": "https://example.com/main.exe",
-    "runurl": "https://example.com/run.exe",
+    "version": "1.0.0",
+    "url": "https://jaattack.k.vu/main.exe",
+    "runurl": "https://jaattack.k.vu/run.exe",
+    "extraFiles": [
+        "https://jaattack.k.vu/pinging_1.png",
+        "https://jaattack.k.vu/pinging_2.png",
+        "https://jaattack.k.vu/pinging_3.png",
+        "https://jaattack.k.vu/pinging_4.png",
+        "https://jaattack.k.vu/pinging_5.png",
+    ]
 }
