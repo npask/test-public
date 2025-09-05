@@ -1,0 +1,5 @@
+{
+    "version": "1.1.0",
+    "url": "https://example.com/main.exe",
+    "runurl": "https://example.com/run.exe",
+}
