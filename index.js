@@ -17,24 +17,37 @@ const userChannels = new Map();
 let serverProxyWs = null;
 
 wss.on("connection", ws => {
-    ws.on("message", message => {
+    ws.on("message", (message, isBinary) => {
+        if (isBinary) {
+            // Hier sind die rohen MC-Daten!
+            // → Entscheide, ob sie vom User oder vom Server kommen
+            if (ws === serverProxyWs) {
+                // vom Server an User weiterleiten
+                for (const [uid, userWs] of userChannels) {
+                    if (userWs.readyState === 1) {
+                        userWs.send(message, { binary: true });
+                    }
+                }
+            } else {
+                // vom User an Server weiterleiten
+                if (serverProxyWs && serverProxyWs.readyState === 1) {
+                    serverProxyWs.send(message, { binary: true });
+                }
+            }
+            return;
+        }
+
+        // JSON-Steuernachrichten
         let data;
-        try { data = JSON.parse(message.toString()); } 
+        try { data = JSON.parse(message.toString()); }
         catch { return; }
 
         if (data.type === "register_user") {
             userChannels.set(data.userId, ws);
         } else if (data.type === "register_server") {
             serverProxyWs = ws;
-        } else if (data.type === "to_server" && serverProxyWs) {
-            serverProxyWs.send(JSON.stringify({ userId: data.userId, payload: data.payload }));
-        } else if (data.type === "to_user") {
-            const userWs = userChannels.get(data.userId);
-            console.log(`Server -> User 1: ${data.userId}, payload length: ${data.payload.length}`)
-            if (userWs && userWs.readyState === 1){
-                console.log(`Server -> User 2: ${data.userId}, payload length: ${data.payload.length}`)
-                userWs.send(JSON.stringify({ payload: data.payload }));
-            }
+        } else if (data.type === "ping") {
+            ws.send(JSON.stringify({ type: "pong" }));
         }
     });
 
