@@ -1,5 +1,6 @@
 const express = require("express");
 const http = require("http");
+const path = require("path");
 const { WebSocketServer } = require("ws");
 
 const app = express();
@@ -9,6 +10,7 @@ const wss = new WebSocketServer({ server });
 const userChannels = new Map(); // userId -> ws
 let serverProxyWs = null;
 
+app.use(express.static(path.join(__dirname, "public")));
 app.get("/", (req, res) => res.send("Cloud läuft"));
 
 wss.on("connection", ws => {
