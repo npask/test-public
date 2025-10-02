@@ -1,13 +1,12 @@
 {
-  "name": "render-test-server",
+  "name": "ws-test",
   "version": "1.0.0",
-  "description": "Test Node.js Server für Render auf Port 10000",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node server.js"
   },
   "dependencies": {
     "express": "^4.18.2",
-    "ws": "^8.18.3"
+    "ws": "^8.16.0"
   }
 }
