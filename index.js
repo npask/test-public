@@ -7,7 +7,7 @@ const app = express();
 
 // Proxy für WebSocket
 app.use("/ws", createProxyMiddleware({
-  target: "ws://localhost:8080", // dein interner WebSocket-Server
+  target: "ws://nicofreundeegalcraft.falixsrv.me:31176", // dein interner WebSocket-Server
   changeOrigin: true,
   ws: true
 }));
