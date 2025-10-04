@@ -12,6 +12,6 @@ app.use("/ws", createProxyMiddleware({
   ws: true
 }));
 
-http.createServer(options, app).listen(80, () => {
+http.createServer(app).listen(80, () => {
   console.log("Proxy läuft auf https://localhost (mit WSS)");
 });
